@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { validateEmail, validatePassword } from "../utils/authHelpers"; // removed hashPassword
+import { useApp } from "../context/AppContext";
+import { validateEmail, validatePassword } from "../utils/authHelpers";
 import { generateCaptcha, drawCaptcha } from "../utils/captcha";
 import "../styles/Auth.css";
 
@@ -25,6 +26,7 @@ function Register() {
   const [showCriteria, setShowCriteria] = useState(false);
   const canvasRef = useRef(null);
   const navigate = useNavigate();
+  const { login } = useApp();
 
   useEffect(() => {
     refreshCaptcha();
@@ -116,9 +118,12 @@ function Register() {
         return;
       }
 
-      // ✅ Save token + user info locally
+      // Save token + user info locally
       localStorage.setItem("token", data.token);
       localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+      // Update context state
+      login(data.user);
 
       navigate("/admin/events");
     } catch (error) {
@@ -156,6 +161,7 @@ function Register() {
               placeholder="Enter your full name"
             />
             {errors.name && <div className="error-message">{errors.name}</div>}
+            }
           </div>
 
           <div className="form-group">
@@ -170,6 +176,7 @@ function Register() {
               placeholder="Enter your email"
             />
             {errors.email && <div className="error-message">{errors.email}</div>}
+            }
           </div>
 
           <div className="form-group">
@@ -269,6 +276,7 @@ function Register() {
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? <span className="loading-spinner"></span> : "Create Account"}
+            }
           </button>
         </form>
 

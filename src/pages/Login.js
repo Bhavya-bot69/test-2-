@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useApp } from "../context/AppContext";
 import { validateEmail } from "../utils/authHelpers";
 import "../styles/Auth.css";
 
@@ -9,6 +10,7 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useApp();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,9 +49,12 @@ function Login() {
         return;
       }
 
-      // ✅ Save token and user
+      // Save token and user
       localStorage.setItem("token", data.token);
       localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+      // Update context state
+      login(data.user);
 
       navigate("/admin/events");
     } catch (error) {
@@ -86,6 +91,7 @@ function Login() {
               placeholder="Enter your email"
             />
             {errors.email && <div className="error-message">{errors.email}</div>}
+            }
           </div>
 
           <div className="form-group">
@@ -105,6 +111,7 @@ function Login() {
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? <span className="loading-spinner"></span> : "Login"}
+            }
           </button>
         </form>
 

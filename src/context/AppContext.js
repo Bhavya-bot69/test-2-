@@ -9,7 +9,7 @@ export const AppProvider = ({ children }) => {
   const [judges, setJudges] = useState([]);
   const [categories, setCategories] = useState([]);
   const [evaluations, setEvaluations] = useState([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Load data from localStorage
   const loadData = () => {
@@ -40,25 +40,62 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("evaluations", JSON.stringify(evaluations));
   };
 
+  // Login function
+  const login = (userData) => {
+    setUser({
+      role: "admin",
+      username: userData.name,
+      email: userData.email,
+      id: userData.id
+    });
+  };
+
   // Logout
   const logout = () => {
     setUser(null);
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
 
-  // Load user and data on mount
+  // Verify token and load user on mount
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    if (currentUser) {
-      const userData = JSON.parse(currentUser);
-      setUser({
-        role: "admin",
-        username: userData.name,
-        email: userData.email,
-        id: userData.id
-      });
-    }
+    const verifyToken = async () => {
+      const token = localStorage.getItem("token");
+      const currentUser = localStorage.getItem("currentUser");
+
+      if (token && currentUser) {
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/me", {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+
+          if (res.ok) {
+            const userData = JSON.parse(currentUser);
+            setUser({
+              role: "admin",
+              username: userData.name,
+              email: userData.email,
+              id: userData.id
+            });
+          } else {
+            // Token is invalid, clear it
+            localStorage.removeItem("token");
+            localStorage.removeItem("currentUser");
+          }
+        } catch (error) {
+          console.error("Token verification failed:", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("currentUser");
+        }
+      }
+
+      setLoading(false);
+    };
+
+    verifyToken();
     loadData();
   }, []);
 
@@ -78,6 +115,7 @@ export const AppProvider = ({ children }) => {
         categories,
         evaluations,
         loading,
+        login,
         logout,
         setEvents,
         setTeams,
